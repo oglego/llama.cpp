@@ -6,6 +6,7 @@
 #include "mtmd.h"
 #include "mtmd-helper.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -74,6 +75,13 @@ int main(int argc, char ** argv) {
     //
     // load backbone model and mmproj
     //
+
+    // TTS needs KV space for generated frames, the prompt, and speaker reference,
+    // not the full training context.
+    if (params.n_ctx == 0) {
+        const int max_frames = params.n_predict > 0 ? params.n_predict : 512;
+        params.n_ctx = std::max(4096, max_frames + 2048);
+    }
 
     auto llama_init = common_init_from_params(params);
     llama_model    * model = llama_init->model();
